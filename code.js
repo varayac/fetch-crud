@@ -31,7 +31,7 @@ const mostrar = (articulos) => {
                       </tr>`
     })
     contenedor.innerHTML = resultados;
-    console.log(contenedor);
+    
 }
 
 // Procedimiento Mostrar
@@ -39,4 +39,89 @@ fetch(url)
     .then( response => response.json() )
     .then( data => mostrar(data) )
     .then( error => console.log(error) )
-    console.log(data)
+
+// ON() Método
+const on = (element, event, selector, handler) => {
+    //console.log(handler)
+    element.addEventListener(event, e => {
+        if(e.target.closest(selector)){
+            handler(e)
+        }
+    })
+}
+
+// Procedimiento borrar
+on(document, 'click', '.btnBorrar', e => {
+    // console.log('Borrado');
+    const fila = e.target.parentNode.parentNode //Captura la fila completa y la asigana al btnBorrar
+    const id = fila.firstElementChild.innerHTML //Captura el id de la fila
+    //console.log(id)
+    alertify.confirm("Articulo eliminado",
+    function(){
+        fetch(url+id, {
+            method: 'DELETE'
+        })
+        .then( res => res.json() )
+        .then( ()=> location.reload() )
+        //alertify.success('Ok')
+    },
+    function(){
+        alertify.error('Cancel')
+    })
+})
+
+// Procedimiento editar
+let idForm = 0
+on(document, 'click', '.btnEditar', e => {
+    const fila = e.target.parentNode.parentNode
+    idForm = fila.children[0].innerHTML // Captura el id de la fila y se lo asigna a la variable idForm
+    //console.log(idForm)
+    const descripcionForm = fila.children[1].innerHTML
+    const precioForm = fila.children[2].innerHTML
+    const stockForm = fila.children[3].innerHTML
+    descripcion.value = descripcionForm;
+    precio.value = precioForm;
+    stock.value = stockForm;
+    opcion = 'editar'
+    modalArticulo.show()
+})
+
+// Procedimiento Crear & Editar
+formArticulo.addEventListener('submit', (e) => {
+    e.preventDefault() //evita recargar la pagina
+    if(opcion=='crear'){
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type':'application/json'
+            },
+            body: JSON.stringify({
+                descripcion:descripcion.value,
+                precio:precio.value,
+                stock:stock.value
+            })
+        })
+        .then( res => res.json() )
+        .then( data => {
+            const nuevoArticulo = []
+            nuevoArticulo.push(data)
+            mostrar(nuevoArticulo)
+        })
+    }
+    if(opcion=='editar'){
+        fetch(url+idForm, {
+            method: 'PUT',
+            headers: {
+                'Content-Type':'application/json'
+            },
+            body: JSON.stringify({
+                descripcion:descripcion.value,
+                precio:precio.value,
+                stock:stock.value
+            })
+        })
+        .then( res => res.json() )
+        .then( res => location.reload() )
+    }
+    modalArticulo.hide()
+})
